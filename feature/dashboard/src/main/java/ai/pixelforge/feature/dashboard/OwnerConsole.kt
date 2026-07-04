@@ -1,11 +1,13 @@
 package ai.pixelforge.feature.dashboard
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import ai.pixelforge.core.data.billing.EntitlementRepository
@@ -45,25 +47,29 @@ fun OwnerConsoleSheet(
     val ent by vm.entitlement.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
+    val context = LocalContext.current
+    val ownerBuild = remember { vm.entitlementRepo.isOwnerBuild() }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(20.dp).verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("✨ Pixelfy Owner Console", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
-            Text("Build: 1.0.0-pixelfy-alpha • AGP 9.1.1 • Kotlin 2.4.0", style = MaterialTheme.typography.bodySmall)
+            Text(if (ownerBuild) "✨ Pixelfy Owner Console" else "✨ Pixelfy Beta Console", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+            Text("Build: 0.9.3-pixelfy-alpha • AGP 9.1.1 • Gradle 9.6.1 • Kotlin 2.4.0", style = MaterialTheme.typography.bodySmall)
 
             ent?.let { e ->
                 ElevatedCard(colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                     Column(Modifier.padding(14.dp)) {
                         Text("Tier: ${e.tier()} • ${e.source}", style = MaterialTheme.typography.titleMedium)
                         Text("Pro=${e.isPro} • Owner=${e.isOwner} • Local=${e.isLocalMode}")
-                        Text("License: PXFY-OWNER-2026-UNLIMITED", style = MaterialTheme.typography.labelSmall)
+                        Text(if (ownerBuild) "Owner flavor: enabled" else "Beta flavor: owner escalation disabled", style = MaterialTheme.typography.labelSmall)
+                        if (e.isOwner) Text("License: PXFY-OWNER-2026-UNLIMITED", style = MaterialTheme.typography.labelSmall)
                     }
                 }
 
                 // Toggles
                 ListItem(
                     headlineContent = { Text("Owner Mode — all 63 ops unlocked") },
-                    trailingContent = { Switch(checked = e.isOwner, onCheckedChange = { vm.toggleOwner(scope, e.isOwner) }) }
+                    supportingContent = { Text(if (ownerBuild) "Owner build QA toggle" else "Disabled in beta builds by design") },
+                    trailingContent = { Switch(enabled = ownerBuild, checked = e.isOwner, onCheckedChange = { vm.toggleOwner(scope, e.isOwner) }) }
                 )
                 ListItem(
                     headlineContent = { Text("Pro Entitlement") },
@@ -87,8 +93,8 @@ fun OwnerConsoleSheet(
                 Text("• Snapseed speed gestures: ON\n• Lightroom RAW + AI denoise: ON\n• Remini plastic guard: opacity 0–100% + mask\n• VSCO preset paywall: OFF — open marketplace\n• PicsArt ad hell: OFF — zero ads\n• Lensa cloud: OFF — on-device only\n• Export: AVIF/HEIC/TIFF16 enabled", style = MaterialTheme.typography.bodySmall)
 
                 Divider()
-                Text("RenderEngine — Phase 1", style = MaterialTheme.typography.titleSmall)
-                Text("• TFLite GPU delegate: active\n• Real-ESRGAN x2/x4 • U²Net • GFPGAN • Denoise UNet • Deblur RIDNet • Sky Seg • Portrait Relight • AI Colorize\n• OpenCV 4.11 NEON: ready\n• 16-bit float intermediate: staged\n• Avg render: ~47ms 12MP (Pixel 8)", style = MaterialTheme.typography.bodySmall)
+                Text("Model availability — honest beta state", style = MaterialTheme.typography.titleSmall)
+                ModelStatusList(context)
 
                 Divider()
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -100,5 +106,46 @@ fun OwnerConsoleSheet(
                 CircularProgressIndicator()
             }
         }
+    }
+}
+
+@Composable
+private fun ModelStatusList(context: Context) {
+    val models = remember {
+        listOf(
+            "AI Upscale x2" to "ml/realesrgan_x2_fp16.tflite",
+            "Super Res x4" to "ml/realesrgan_x4_fp16.tflite",
+            "AI Denoise" to "ml/denoise_nl_unet_512.tflite",
+            "AI Deblur" to "ml/deblur_ridnet.tflite",
+            "Face Restore" to "ml/gfpgan_1_4_mobile.tflite",
+            "Background Remove" to "ml/u2netp_320.tflite",
+            "Sky Enhance" to "ml/mediapipe_selfie_segmentation.tflite",
+            "Portrait Relight" to "ml/portrait_relight_256.tflite",
+            "AI Colorize" to "ml/deoldify_mobile.tflite"
+        )
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        models.forEach { (label, asset) ->
+            val available = remember(asset) {
+                runCatching { context.assets.open(asset).close() }.isSuccess
+            }
+            ListItem(
+                headlineContent = { Text(label) },
+                supportingContent = { Text(asset) },
+                trailingContent = {
+                    AssistChip(
+                        onClick = {},
+                        label = { Text(if (available) "Available" else "Missing") },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = if (available) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
+                        )
+                    )
+                }
+            )
+        }
+        Text(
+            "Missing models stay disabled in beta instead of silently passing through.",
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }

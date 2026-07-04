@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Transition Phase 3 baseline: no cleartext traffic anywhere. -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Debug builds may use local dev servers only if a debug-specific manifest opts in later. -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+
+    <!--
+      Certificate pinning is intentionally not enabled until the production Supabase host is final.
+      Phase 3.1: add SPKI primary + backup pins for <project-ref>.supabase.co and pixelfy.app.
+    -->
+</network-security-config>

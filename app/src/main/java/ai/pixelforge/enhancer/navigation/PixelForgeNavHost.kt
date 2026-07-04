@@ -46,7 +46,8 @@ fun PixelForgeNavHost(
 
     if (!onboardDone) {
         PixelfyOnboarding(
-            isPro = ent.isPro || ent.isOwner,
+            isPro = ent.isPro,
+            isOwner = ent.isOwner,
             onFinish = {
                 scope.launch { entitlementRepo.setOnboardingDone(true) }
             }

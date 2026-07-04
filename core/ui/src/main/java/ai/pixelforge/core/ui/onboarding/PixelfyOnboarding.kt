@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ai.pixelforge.core.ui.brand.PixelfyGradient
 import ai.pixelforge.core.ui.theme.PixelfyTheme
+import kotlinx.coroutines.launch
 
 data class OnboardPage(
     val emoji: String,
@@ -33,25 +34,20 @@ private val freePages = listOf(
     OnboardPage("🚀", "Start Enhancing", "Tap ‘Pixelfy +’ — import from gallery, camera, or files", listOf("Export JPEG/PNG/WEBP free", "Upgrade anytime — $4.99/mo • $29.99/yr • $49 lifetime"))
 )
 
-private val proPages = listOf(
-    OnboardPage("💫", "Pixelfy Pro — Unlocked", "Owner build detected — all 63 ops unlocked", listOf("License: PXFY-OWNER-2026-UNLIMITED", "Auth standby • Local Mode"), true),
-    OnboardPage("🤖", "10 AI Models — On-Device", "Real-ESRGAN • U²Net • GFPGAN • Denoise UNet • Deblur • Sky • Relight • Colorize", listOf("TFLite GPU delegate • NNAPI fallback", "No cloud • Private • 85 MB total", "Face restore opacity 0–100% — anti-Remini plastic"), true),
-    OnBoardPage("🧬", "63 OpNode Stack", "Non-destructive • reorder • blend • mask", listOf("Color/Tone: 14 • Detail: 8 • AI: 9 • Repair: 5 • Transform: 7 • Effects: 7", "3D LUT .cube import", "16-bit float pipeline"), true),
-    OnboardPage("⚡", "Pro Workflow", "Batch • A/B compare • Version history • Auto-save", listOf("Batch 50 images <6 min", "Before/After slider — fixes LR mobile missing compare", "Auto-save every 2s — fixes Snapseed no auto-save", "Healing: OpenCV Telea — fixes Snapseed ‘hit or miss’"), true),
-    OnboardPage("👑", "Owner Console", "7-tap Pixelfy logo → full control", listOf("Toggle Pro / Free / Local / Cloud live", "Render HUD • model status • export logs", "Force FREE test — QA paywall without losing owner"), true)
-)
-
-// need to fix typo OnBoardPage -> OnboardPage
-// Let's provide correct list via copy
-
 @Composable
 fun PixelfyOnboarding(
     isPro: Boolean,
+    isOwner: Boolean = false,
     onFinish: () -> Unit
 ) {
-    val pages = if (isPro) listOf(
-        OnboardPage("💫", "Pixelfy Pro — Unlocked", "Owner build detected — all 63 ops unlocked", listOf("License: PXFY-OWNER-2026-UNLIMITED", "Auth standby • Local Mode"), true),
-        OnboardPage("🤖", "10 AI Models — On-Device", "Real-ESRGAN • U²Net • GFPGAN • Denoise UNet • Deblur • Sky • Relight • Colorize", listOf("TFLite GPU delegate • NNAPI fallback", "No cloud • Private • 85 MB total", "Face restore opacity 0–100% — anti-Remini plastic"), true),
+    val proIntro = if (isOwner) {
+        OnboardPage("💫", "Pixelfy Owner — Unlocked", "Owner build detected — all 63 ops unlocked", listOf("Internal QA license active", "Auth standby • Local Mode"), true)
+    } else {
+        OnboardPage("💫", "Pixelfy Pro", "Pro tools unlock advanced AI and workflow features", listOf("Auth standby • Local Mode", "No cloud upload unless you enable sync", "Upgrade only after you see value"), true)
+    }
+    val pages = if (isPro || isOwner) listOf(
+        proIntro,
+        OnboardPage("🤖", "AI Models — On-Device", "Upscale • Background remove • Face restore • Denoise • Deblur", listOf("Tools show honest availability", "Missing model assets are disabled, not faked", "Face restore opacity 0–100% — anti-Remini plastic"), true),
         OnboardPage("🧬", "63 OpNode Stack", "Non-destructive • reorder • blend • mask", listOf("Color/Tone: 14 • Detail: 8 • AI: 9 • Repair: 5 • Transform: 7 • Effects: 7", "3D LUT .cube import", "16-bit float pipeline"), true),
         OnboardPage("⚡", "Pro Workflow", "Batch • A/B compare • Version history • Auto-save", listOf("Batch 50 images <6 min", "Before/After slider — fixes LR mobile missing compare", "Auto-save every 2s — fixes Snapseed no auto-save", "Healing: OpenCV Telea — fixes Snapseed ‘hit or miss’"), true),
         OnboardPage("👑", "Owner Console", "7-tap Pixelfy logo → full control", listOf("Toggle Pro / Free / Local / Cloud live", "Render HUD • model status • export logs", "Force FREE test — QA paywall without losing owner"), true)
@@ -72,11 +68,22 @@ fun PixelfyOnboarding(
                     Spacer(Modifier.width(12.dp))
                     Column {
                         Text("Pixelfy", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-                        Text(if(isPro) "Pro • Owner • Local" else "Free • Local • Auth standby", style = MaterialTheme.typography.labelMedium)
+                        Text(
+                            when {
+                                isOwner -> "Owner • Local"
+                                isPro -> "Pro • Local"
+                                else -> "Free • Local • Auth standby"
+                            },
+                            style = MaterialTheme.typography.labelMedium
+                        )
                     }
                     Spacer(Modifier.weight(1f))
-                    if (isPro) {
-                        AssistChip(onClick = {}, label = { Text("OWNER ✨") }, colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer))
+                    if (isPro || isOwner) {
+                        AssistChip(
+                            onClick = {},
+                            label = { Text(if (isOwner) "OWNER ✨" else "PRO ✨") },
+                            colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                        )
                     }
                 }
 
@@ -105,7 +112,7 @@ fun PixelfyOnboarding(
                             Spacer(Modifier.height(12.dp))
                             Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(12.dp)) {
                                 Text(
-                                    "Owner unlocked • all 63 ops • $49 lifetime value — FREE for you",
+                                    if (isOwner) "Owner unlocked • all 63 ops • internal QA build" else "Pro tools • private by default • no cloud unless enabled",
                                     modifier = Modifier.padding(12.dp),
                                     style = MaterialTheme.typography.labelMedium,
                                     textAlign = TextAlign.Center
@@ -157,8 +164,11 @@ fun PixelfyOnboarding(
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    if (isPro) "Pixelfy Pro • Owner • Auth standby • Local Mode • v1.0.0-pixelfy-alpha" 
-                    else "Pixelfy Free • 38 tools • Auth standby • v1.0.0",
+                    when {
+                        isOwner -> "Pixelfy Owner • Auth standby • Local Mode • 0.9.3-alpha"
+                        isPro -> "Pixelfy Pro • Auth standby • Local Mode • 0.9.3-alpha"
+                        else -> "Pixelfy Free • 38 tools • Auth standby • 0.9.3-alpha"
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),

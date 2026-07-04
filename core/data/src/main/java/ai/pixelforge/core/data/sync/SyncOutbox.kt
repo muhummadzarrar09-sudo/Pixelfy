@@ -6,7 +6,10 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
-@Entity(tableName = "sync_outbox")
+@Entity(
+    tableName = "sync_outbox",
+    indices = [Index(value = ["createdAt"])]
+)
 data class OutboxEntry(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val entity: String, // "projects","edits","presets"

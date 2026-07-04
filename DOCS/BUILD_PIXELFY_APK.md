@@ -14,7 +14,7 @@ Requirements:
 
 Steps:
 1. Open `pixelforge/` in Android Studio — AGP 9.1 auto-sync
-2. Wait Gradle 9.3 sync — ~90 sec first time
+2. Wait Gradle 9.6.1 sync — ~90 sec first time
 3. Select `app` → Run ▶ (Shift+F10)
    - Debug APK auto-installs: `ai.pixelforge.enhancer.debug`
 4. First launch → **Pixelfy Pro Onboarding (5 pages)** → Dashboard
@@ -23,8 +23,8 @@ Steps:
    - Toggle: Force FREE test → UI paywall test instantly
 
 APK output:
-- Debug: `app/build/outputs/apk/debug/app-debug.apk` (~78 MB universal, ~52 MB arm64 split)
-- Release: Build → Generate Signed Bundle / APK → choose `app/pixelfy-release.jks`
+- Debug: `app/build/outputs/apk/beta/debug/*.apk` (~78 MB universal, ~52 MB arm64 split)
+- Release: Use `./scripts/build_release_apk.sh` for beta + owner release artifacts
 
 ---
 
@@ -46,12 +46,12 @@ yes | sdkmanager --licenses
 sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.0.12077973"
 
 # 5. Debug — owner unlocked (BuildConfig.IS_OWNER=true)
-./gradlew :app:assembleDebug
+./gradlew :app:assembleBetaDebug
 
 # output:
-# app/build/outputs/apk/debug/app-debug.apk
+# app/build/outputs/apk/beta/debug/*.apk
 
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/beta/debug/*.apk
 adb shell monkey -p ai.pixelforge.enhancer.debug -c android.intent.category.LAUNCHER 1
 ```
 
@@ -76,23 +76,23 @@ export PF_STORE_PASSWORD=pixelforge
 export PF_KEY_ALIAS=pixelfy
 export PF_KEY_PASSWORD=pixelforge
 
-./gradlew :app:assembleRelease :app:bundleRelease
+./scripts/build_release_apk.sh
 
 # outputs:
-# app/build/outputs/apk/release/app-release.apk
-# app/build/outputs/bundle/release/app-release.aab
+# app/build/outputs/apk/beta/release/*.apk
+# app/build/outputs/bundle/betaRelease/*.aab
 ```
 
 Verify:
 ```bash
-$ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
+$ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs app/build/outputs/apk/beta/release/*.apk
 # Signer #1 certificate SHA-256: ...
 # Verified using v1/ v2 / v3 / v4 scheme: true
 ```
 
 Install:
 ```bash
-adb install -r app/build/outputs/apk/release/app-release.apk
+adb install -r app/build/outputs/apk/beta/release/*.apk
 ```
 
 ---

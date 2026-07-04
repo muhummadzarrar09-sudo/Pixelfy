@@ -5,7 +5,7 @@ AI Image Enhancement Studio — July 2026
 - Icon: `app/src/main/res/mipmap-*/ic_launcher.png`
 - Mark: aperture-blade “P” with sparkle stars
 - Gradient: Electric Purple #8B5CF6 → Teal Mint #06FFA5 → Hot Pink #FF3B9A
-- File: `pixelfy_logo.png` (1024px) — copied to all densities
+- File: `assets/branding/pixelfy_logo.png` (1024px) — copied to all densities
 
 ## Colors — Material 3 Expressive
 ```

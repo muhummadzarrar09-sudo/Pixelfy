@@ -316,7 +316,7 @@ Owner build — Auth standby — Local Mode
   - `BRANDING_PIXELFY.md`
   - `COMPETITOR_RESEARCH_PIXELFY.md`
   - `ROADMAP_PIXELFY.md` (Alpha→Production 435 lines)
-  - `PHASES.md` (1/2/3)
+  - `DOCS/PHASES_REDEFINED.md` + `DOCS/PHASE_3_1_BUILD_CORE_LOOP.md`
   - `supabase/schema.sql`
 
 Next build I recommend: **Alpha 0.9.3 polish → sign debug APK → sideload test** — then open Beta 1 Closed July 21 with 50 Pioneers.

@@ -13,26 +13,44 @@ android {
         applicationId = "ai.pixelforge.enhancer"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0.0-pixelfy-alpha"
+        versionCode = 903
+        versionName = "0.9.3-pixelfy-alpha"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
         ndk { abiFilters += listOf("arm64-v8a","x86_64") }
-        // Pixelfy Owner entitlement — BuildConfig flag
-        buildConfigField("boolean", "IS_OWNER", "true")
-        buildConfigField("String", "OWNER_LICENSE", "\"PXFY-OWNER-2026-UNLIMITED\"")
+        // Beta-safe defaults. Owner entitlement is enabled only by the owner flavor.
+        buildConfigField("boolean", "IS_OWNER", "false")
+        buildConfigField("String", "OWNER_LICENSE", "\"\"")
         buildConfigField("boolean", "LOCAL_MODE_DEFAULT", "true")
         buildConfigField("boolean", "AUTH_STANDBY", "true")
-        resValue("string", "app_name", "Pixelfy")
+        resValue("bool", "pixelfy_is_owner", "false")
+    }
+    flavorDimensions += "channel"
+    productFlavors {
+        create("owner") {
+            dimension = "channel"
+            applicationIdSuffix = ".owner"
+            versionNameSuffix = "-owner"
+            buildConfigField("boolean", "IS_OWNER", "true")
+            buildConfigField("String", "OWNER_LICENSE", "\"PXFY-OWNER-2026-UNLIMITED\"")
+            resValue("bool", "pixelfy_is_owner", "true")
+        }
+        create("beta") {
+            dimension = "channel"
+            versionNameSuffix = "-beta"
+            buildConfigField("boolean", "IS_OWNER", "false")
+            buildConfigField("String", "OWNER_LICENSE", "\"\"")
+            resValue("bool", "pixelfy_is_owner", "false")
+        }
     }
     signingConfigs {
         create("release") {
             // Phase 3 — signed release
             // Place pixelforge-release.jks in app/
             // or set env: PF_STORE_FILE, PF_STORE_PASSWORD, etc.
-            storeFile = file(System.getenv("PF_STORE_FILE") ?: "pixelforge-release.jks")
+            storeFile = file(System.getenv("PF_STORE_FILE") ?: "pixelfy-release.jks")
             storePassword = System.getenv("PF_STORE_PASSWORD") ?: "pixelforge"
-            keyAlias = System.getenv("PF_KEY_ALIAS") ?: "pixelforge"
+            keyAlias = System.getenv("PF_KEY_ALIAS") ?: "pixelfy"
             keyPassword = System.getenv("PF_KEY_PASSWORD") ?: "pixelforge"
             enableV3Signing = true
             enableV4Signing = true

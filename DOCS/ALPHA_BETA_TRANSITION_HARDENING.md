@@ -3,6 +3,22 @@
 July 15–28, 2026 — 14-day Security • Privacy • Data Integrity Freeze
 AGP 9.1.1 • Kotlin 2.4.0 • targetSdk 36
 
+## Current implementation status — Transition Phase 3 resumed — July 4, 2026
+
+The previous AI handoff truncated before the docs were fully updated. This repo has now resumed the **Transition Phase 3 baseline** with concrete code changes:
+
+- Android backup posture hardened: `android:allowBackup="false"`, backup/data-extraction exclusions for prefs, DB, exports, cache.
+- Cleartext traffic blocked globally via `network_security_config.xml` and manifest `android:usesCleartextTraffic="false"`.
+- Verified App Link auth target added for `https://pixelfy.app/auth`; custom `pixelfy://auth` remains for Supabase standby/local mode.
+- Room destructive fallback removed from the live app path; explicit v1→v2 outbox migration added; WAL enabled.
+- Core data no longer imports app `BuildConfig`; it owns transition-safe build flags.
+- Supabase client moved to `pixelfy://auth` scheme and now no-ops sync/realtime while placeholder credentials are present.
+- R8 rules narrowed from broad `-keep ai.pixelforge.**` to framework/serialization/native binding keeps.
+- RASP baseline added: root/emulator/debugger/hooking/signature signals are collected without crashing the app.
+- Feature module Gradle dependencies tightened so modules declare the core/processor/Hilt/Compose dependencies they use.
+
+Still pending in Phase 3.1: final Supabase host + SPKI pins, EncryptedDataStore/Tink, Play Integrity API token flow, cert hash injection, beta-safe onboarding copy, and verified `./gradlew :app:assembleBetaDebug` after JDK 21 is active. Owner/beta flavors are now defined.
+
 > Inserted between Alpha 0.9.3 (Jul 14) and Beta 1 Closed (Jul 29).
 > No new user-facing features. Only: harden, prove, document.
 > Goal: ship Beta with **zero trust debt** — on-device AI privacy leadership, Supabase RLS airtight, Play Data Safety green, GDPR/CCPA ready.

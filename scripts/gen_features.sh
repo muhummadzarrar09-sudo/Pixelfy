@@ -256,7 +256,7 @@ object DataModule {
     @Provides @Singleton
     fun provideDb(@ApplicationContext ctx: Context): PixelForgeDb =
         Room.databaseBuilder(ctx, PixelForgeDb::class.java, "pixelforge.db")
-            .fallbackToDestructiveMigration()
+            // Transition hardening: destructive migrations disabled for Beta+
             .build()
 }
 KT

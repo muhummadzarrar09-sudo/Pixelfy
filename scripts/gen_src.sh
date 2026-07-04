@@ -16,7 +16,7 @@ cat > $ROOT/app/src/main/AndroidManifest.xml <<'MF'
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <application
         android:name=".PixelForgeApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"

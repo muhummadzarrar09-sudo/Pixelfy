@@ -1,72 +1,90 @@
-# PixelForge — Image Enhancement Suite
+# Pixelfy — Local-First AI Image Enhancement
 
-Full-stack Android Kotlin + Supabase. July 2026 latest toolchain, zero deprecated APIs.
+Pixelfy is an Android Kotlin + Jetpack Compose image editor focused on a simple user promise:
 
-**APK-ready | On-device AI | Freemium 38 free / 25 Pro**
+> Import one photo → make it visibly better → compare before/after → export/share — with Local Mode first and cloud/auth opt-in.
 
-## Stack — brand new July 2026
+## Current phase
 
-- AGP **9.1.1** (April 2026) — built-in Kotlin, new Variant API
-- Gradle **9.3.0**
-- Kotlin **2.4.0** (K2)
-- Compose BOM **2026.07.01** — UI 1.11.4, Material3 1.4.0, Adaptive 1.2.0
-- compileSdk 36 / targetSdk 36 / minSdk 28 / JVM 21
-- Hilt 2.57, Room 2.8.0 KSP, Paging 3, DataStore 1.1.7
-- Coil 3.2.0
-- Supabase-kt **3.3.0** + Ktor **3.5.0**
-- TFLite 2.19 GPU, MediaPipe 0.10.24, OpenCV 4.11.0
+**Phase 3.1 — Build + Honest Core Loop**
 
-## Features built
+Canonical docs live in [`DOCS/`](DOCS/):
 
-- ✅ Supabase Magic Link auth scaffold (`pixelforge://auth`)
-- ✅ Adaptive NavigationSuiteScaffold: BottomBar phone / Rail tablet / Drawer 840dp+
-- ✅ Dashboard, Gallery, Editor, Batch, Presets, Exports — all with empty / loading / optimistic states
-- ✅ Full CRUD: Projects, Edits (OpNode stack), Presets, Batches, Exports — Room offline-first, Supabase sync ready
-- ✅ 63 image ops enumerated — 38 Free / 25 Pro — non-destructive stack, blend modes, masks
-- ✅ On-device AI: Real-ESRGAN, GFPGAN-lite, U²Net, MediaPipe segmentation
-- ✅ Seed data: 6 demo projects, 24 presets, 3 batches — app feels alive
-- ✅ Export: JPEG, PNG, WEBP, HEIC, AVIF, TIFF 16-bit
+- [`DOCS/README.md`](DOCS/README.md)
+- [`DOCS/PHASES_REDEFINED.md`](DOCS/PHASES_REDEFINED.md)
+- [`DOCS/PHASE_3_1_BUILD_CORE_LOOP.md`](DOCS/PHASE_3_1_BUILD_CORE_LOOP.md)
+- [`DOCS/PRODUCT_READINESS_AUDIT.md`](DOCS/PRODUCT_READINESS_AUDIT.md)
+- [`DOCS/TRANSITION_PHASE_3_STATUS.md`](DOCS/TRANSITION_PHASE_3_STATUS.md)
+- [`DOCS/WORKSPACE_STRUCTURE.md`](DOCS/WORKSPACE_STRUCTURE.md)
 
-## Project layout
+## Stack
 
-```
-:app
-:core:ui / :core:data / :core:domain
-:feature:dashboard / :feature:gallery / :feature:editor / :feature:batch / :feature:presets / :feature:auth
-:processor   // RenderEngine + TFLite
-supabase/
-```
+- AGP **9.1.1**
+- Gradle **9.6.1**
+- Kotlin **2.4.0**
+- compileSdk / targetSdk **36**
+- JVM target **21**
+- Compose Material 3
+- Hilt, Room, DataStore, WorkManager
+- Supabase scaffold for opt-in auth/cloud sync
+- TensorFlow Lite / MediaPipe scaffold for on-device AI
 
-## Supabase schema
-See `supabase/schema.sql` — profiles, projects, edits, presets, batches, exports — RLS ON, explicit GRANTs (June 2026 Supabase breaking change compliant).
+## Repository layout
 
-Replace in `SupabaseClient.kt`:
-```
-URL = "https://YOUR.supabase.co"
-KEY = "sb_publishable_xxx"
+```text
+app/                 Android application shell
+core/                domain, data, ui modules
+feature/             dashboard, gallery, editor, batch, presets, auth
+processor/           render engine and TFLite hooks
+supabase/            database schema and seed SQL
+web-beta/            beta waitlist site scaffold
+scripts/             doctor, build, generator/scaffold scripts
+DOCS/                canonical product/phase/security docs
+assets/branding/     source brand assets
 ```
 
-## Build APK
+## Quick checks
+
+Run the workspace doctor:
 
 ```bash
-./gradlew :app:assembleDebug
-# outputs app/build/outputs/apk/debug/app-debug.apk
-./gradlew :app:assembleRelease
+./scripts/doctor.sh
 ```
 
-Android Studio Narwhal / Meerkat 2026.1 required for AGP 9.1.
+Build on JDK 21:
 
-## 63 Ops — Freemium split
+```bash
+export JAVA_HOME=/path/to/jdk-21
+./gradlew :app:assembleBetaDebug --stacktrace --no-daemon
+```
 
-Free 38: Brightness, Contrast, Exposure, Highlights, Shadows, Whites, Blacks, Saturation, Vibrance, Temp, Tint, Gamma, Curves, Levels, Sharpen, Clarity, Texture, Dehaze, Vignette, Grain, Bloom, HSL, Color Mixer, Split Tone, Gradient Map, Crop, Rotate, Straighten, Perspective, Flip, Gaussian/Motion/Radial Blur, Invert, Sepia, B&W, Fade
+Current sandbox blocker: this environment only has JDK 11, while Gradle 9.6.1 requires JDK 17+.
 
-Pro 25: AI_Upscale, AI_Denoise, AI_Deblur, Face_Restore, Portrait_Relight, Sky_Enhance, BG_Remove, AI_Colorize, Super_Res, HDR_Tone_Map, Channel_Mixer, LUT_3D, Lens_Blur, Chromatic_Fix, Lens_Distort, Spot_Heal, Dust_Remove, Red_Eye, Blemish, Liquify, Content_Aware_Scale, Oil_Paint, Glitch, Double_Exposure...
+## User-centred status
 
-## Next
-- Wire TFLite models to assets/ml/
-- Supabase Realtime sync worker
-- In-app Pro purchase via RevenueCat
-- Export Worker with notification
-- LUT .cube importer
+Started in Phase 3.1:
 
-MIT — PixelForge 2026
+- Android Photo Picker import from Dashboard.
+- Picked images are copied into app-private project storage.
+- Picked image creates a local project.
+- Editor loads imported image URIs and renders bitmap previews.
+- A/B view compares imported original/rendered image.
+- Eight free edits are wired against imported previews: brightness, exposure, contrast, saturation, B&W, sepia, invert, fade.
+- JPEG / PNG / WEBP exports write to app-private storage first.
+- Exports can be explicitly saved to Gallery or shared.
+- Owner and beta flavors are defined with entitlement controlled by app resource flags.
+- Beta cannot self-promote into owner mode through local state/easter egg.
+- Beta-safe onboarding/runtime copy avoids exposing owner license text.
+- Owner/Beta console lists available/missing model assets.
+- Missing AI model-backed tools are disabled with honest messaging.
+- Demo seed data is local-only and does not pollute sync outbox.
+
+Still pending before real beta:
+
+- JDK 21 debug build verification.
+- JDK 21/on-device verification of the 8 wired free edits.
+- JDK 21/on-device verification for beta build.
+- expanded AI model states: Pro / Coming soon / CPU fallback / GPU fallback.
+- CI build result cleanup after first JDK 21 run.
+
+MIT — Pixelfy 2026

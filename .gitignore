@@ -1,0 +1,42 @@
+# Gradle / Android
+.gradle/
+build/
+**/build/
+**/.cxx/
+**/.externalNativeBuild/
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Signing / secrets
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*
+!web-beta/.env.local.example
+
+# Generated artifacts
+*.apk
+*.aab
+*.apks
+*.idsig
+mapping.txt
+
+# Node / web-beta
+web-beta/node_modules/
+web-beta/.next/
+web-beta/out/
+web-beta/.vercel/
+web-beta/pnpm-lock.yaml
+
+# OS/editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log

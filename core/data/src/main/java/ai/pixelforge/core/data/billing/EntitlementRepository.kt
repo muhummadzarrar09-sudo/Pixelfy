@@ -6,7 +6,6 @@ import androidx.datastore.preferences.preferencesDataStore
 import ai.pixelforge.core.domain.model.Entitlement
 import ai.pixelforge.core.domain.model.OpType
 import ai.pixelforge.core.domain.model.canUse
-import ai.pixelforge.enhancer.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
@@ -28,13 +27,13 @@ class EntitlementRepository @Inject constructor(
     private val KEY_ONBOARD_DONE = booleanPreferencesKey("onboard_done_v1")
     private val KEY_ONBOARD_VERSION = intPreferencesKey("onboard_version")
 
-    // Owner override: BuildConfig.IS_OWNER == true in owner/debug builds
-    private val buildOwner = try {
-        BuildConfig::class.java.getField("IS_OWNER").get(null) as Boolean
-    } catch (_: Exception) { true } // default owner ON for local testing — per request
+    // Owner override comes from the app flavor resource, not a library BuildConfig.
+    // beta* variants set pixelfy_is_owner=false; owner* variants set it true.
+    private val buildOwner: Boolean by lazy { appBool("pixelfy_is_owner", default = false) }
 
     val entitlement: Flow<Entitlement> = context.pixelfyPrefs.data.map { p ->
-        val ownerFlag = p[KEY_OWNER] ?: buildOwner
+        // Beta safety: only owner-flavored builds may ever become owner.
+        val ownerFlag = if (buildOwner) (p[KEY_OWNER] ?: true) else false
         val forceFree = p[KEY_FORCE_FREE] ?: false
         val pro = if (forceFree) false else (p[KEY_PRO] ?: ownerFlag)
         Entitlement(
@@ -59,7 +58,8 @@ class EntitlementRepository @Inject constructor(
         context.pixelfyPrefs.edit { it[KEY_FORCE_FREE] = v }
     }
     suspend fun setOwner(v: Boolean) {
-        context.pixelfyPrefs.edit { it[KEY_OWNER] = v }
+        // Public beta cannot self-promote into owner mode. Owner builds may toggle for QA.
+        context.pixelfyPrefs.edit { it[KEY_OWNER] = if (buildOwner) v else false }
     }
 
     // 7-tap easter egg
@@ -68,8 +68,8 @@ class EntitlementRepository @Inject constructor(
         context.pixelfyPrefs.edit { prefs ->
             count = (prefs[KEY_TAP_COUNT] ?: 0) + 1
             if (count >= 7) {
-                // unlock owner console
-                prefs[KEY_OWNER] = !(prefs[KEY_OWNER] ?: buildOwner)
+                // Owner easter egg works only in owner-flavored builds. Beta builds stay beta.
+                prefs[KEY_OWNER] = if (buildOwner) !(prefs[KEY_OWNER] ?: true) else false
                 count = 0
             }
             prefs[KEY_TAP_COUNT] = count
@@ -79,6 +79,13 @@ class EntitlementRepository @Inject constructor(
 
     suspend fun canUse(op: OpType): Boolean {
         return entitlement.first().canUse(op)
+    }
+
+    fun isOwnerBuild(): Boolean = buildOwner
+
+    private fun appBool(name: String, default: Boolean): Boolean {
+        val id = context.resources.getIdentifier(name, "bool", context.packageName)
+        return if (id != 0) context.resources.getBoolean(id) else default
     }
 
     // Onboarding — Alpha 0.9.3

@@ -14,8 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
-import org.tensorflow.lite.support.common.FileUtil
-import java.nio.ByteBuffer
+import java.io.FileInputStream
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.min
@@ -258,13 +259,26 @@ abstract class BaseTFLiteModel(ctx: Context, private val asset: String, private 
                     addDelegate(gpuDelegate)
                 }
             }
-            val model = FileUtil.loadMappedFile(ctx, asset)
+            val model = loadMappedAsset(ctx, asset)
             interpreter = Interpreter(model, opts)
         } catch (e: Exception) {
             // model not bundled yet — graceful fallback
             interpreter = null
         }
     }
+
+    private fun loadMappedAsset(ctx: Context, assetPath: String): MappedByteBuffer {
+        ctx.assets.openFd(assetPath).use { descriptor ->
+            FileInputStream(descriptor.fileDescriptor).channel.use { channel ->
+                return channel.map(
+                    FileChannel.MapMode.READ_ONLY,
+                    descriptor.startOffset,
+                    descriptor.declaredLength
+                )
+            }
+        }
+    }
+
     fun close() { interpreter?.close(); gpuDelegate?.close() }
 }
 
