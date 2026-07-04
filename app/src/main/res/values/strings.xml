@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Pixelfy</string>
+    <string name="app_tagline">AI Image Enhancement Studio</string>
+    <string name="auth_standby">Auth standby — Local mode</string>
+</resources>

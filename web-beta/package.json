@@ -1,0 +1,47 @@
+{
+  "name": "beta-pixelfy-app",
+  "version": "0.9.3",
+  "private": true,
+  "engines": {
+    "node": ">=22 <27",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "@supabase/supabase-js": "2.52.1",
+    "@supabase/ssr": "0.6.1",
+    "framer-motion": "12.9.2",
+    "sonner": "2.0.3",
+    "zod": "3.25.76",
+    "react-hook-form": "7.58.1",
+    "@hookform/resolvers": "5.1.1",
+    "lucide-react": "0.525.0",
+    "clsx": "2.1.1",
+    "tailwind-merge": "3.3.1",
+    "next-themes": "0.4.6",
+    "vaul": "1.1.2"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "@types/node": "24.0.3",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.5",
+    "tailwindcss": "4.3.2",
+    "@tailwindcss/postcss": "4.3.2",
+    "postcss": "8.5.6",
+    "eslint": "9.29.0",
+    "eslint-config-next": "16.2.10",
+    "@tailwindcss/typography": "0.5.16",
+    "autoprefixer": "10.4.21"
+  },
+  "packageManager": "pnpm@10.12.1"
+}

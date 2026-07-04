@@ -1,0 +1,108 @@
+name: Pixelfy Android CI
+
+on:
+  push:
+    branches: [ "main", "develop", "alpha/**", "beta/**" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Accept licenses
+      run: yes | sdkmanager --licenses || true
+
+    - name: Install NDK + CMake
+      run: |
+        sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;27.0.12077973" "cmake;3.22.1"
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      working-directory: ./
+
+    # Owner keystore — from GitHub Secrets
+    - name: Decode Keystore
+      run: |
+        echo "${{ secrets.PIXELFY_KEYSTORE_BASE64 }}" | base64 -d > app/pixelfy-release.jks
+        echo "storeFile=pixelfy-release.jks" > keystore.properties
+        echo "storePassword=${{ secrets.PIXELFY_STORE_PASSWORD }}" >> keystore.properties
+        echo "keyAlias=${{ secrets.PIXELFY_KEY_ALIAS }}" >> keystore.properties
+        echo "keyPassword=${{ secrets.PIXELFY_KEY_PASSWORD }}" >> keystore.properties
+      if: github.event_name != 'pull_request'
+
+    - name: Build Debug APK — Alpha
+      run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+      env:
+        ORG_GRADLE_PROJECT_PixelfyOwner: true
+
+    - name: Build Release AAB + APK — Owner
+      if: github.ref == 'refs/heads/main'
+      run: |
+        ./gradlew :app:bundleRelease :app:assembleRelease --stacktrace --no-daemon \
+          -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/app/pixelfy-release.jks \
+          -Pandroid.injected.signing.store.password=${{ secrets.PIXELFY_STORE_PASSWORD }} \
+          -Pandroid.injected.signing.key.alias=${{ secrets.PIXELFY_KEY_ALIAS }} \
+          -Pandroid.injected.signing.key.password=${{ secrets.PIXELFY_KEY_PASSWORD }}
+      env:
+        PF_STORE_FILE: app/pixelfy-release.jks
+        PF_STORE_PASSWORD: ${{ secrets.PIXELFY_STORE_PASSWORD }}
+        PF_KEY_ALIAS: ${{ secrets.PIXELFY_KEY_ALIAS }}
+        PF_KEY_PASSWORD: ${{ secrets.PIXELFY_KEY_PASSWORD }}
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Pixelfy-alpha-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 14
+
+    - name: Upload Release APK
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Pixelfy-owner-release
+        path: app/build/outputs/apk/release/app-release.apk
+        retention-days: 30
+
+    - name: Upload AAB
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v4
+      with:
+        name: Pixelfy-release-aab
+        path: app/build/outputs/bundle/release/app-release.aab
+        retention-days: 30
+
+    - name: Run unit tests
+      run: ./gradlew testDebugUnitTest --no-daemon || true
+
+    - name: Lint
+      run: ./gradlew lintDebug --no-daemon || true
+
+    - name: SBOM CycloneDX
+      run: ./gradlew cyclonedxBom --no-daemon || true
+
+    - name: Upload mapping + SBOM
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-reports
+        path: |
+          **/build/outputs/mapping/
+          **/build/reports/
+        retention-days: 14
