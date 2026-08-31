@@ -8,6 +8,11 @@ Pixelfy is an Android Kotlin + Jetpack Compose image editor focused on a simple 
 
 **Phase 3.1 — Build + Honest Core Loop**
 
+> **Also here: [`web-app/`](web-app/) — Pixelfy Web Studio**, a laptop-first,
+> local-first editor (Vite + React + WebGL2, `npm run dev` and go). Decision
+> and status in [`DOCS/WEB_APP_PIXELFY.md`](DOCS/WEB_APP_PIXELFY.md). The
+> Android app below is parked-but-alive; both tracks may resume in parallel.
+
 Canonical docs live in [`DOCS/`](DOCS/):
 
 - [`DOCS/README.md`](DOCS/README.md)
